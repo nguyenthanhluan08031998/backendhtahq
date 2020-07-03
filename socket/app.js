@@ -6,10 +6,11 @@ var io = require("socket.io")(server);
 server.listen(port, () => console.log("Server running in port " + port));
 
 let data = [];
+var room = [];
 
 io.on("connection", function (socket) {
     const dataServer = data;
-    // console.log(socket.id + ": connected");
+    console.log(socket.id + ": connected");
     socket.on("disconnect", function () {
         console.log(socket.id + ": disconnected");
     });
@@ -30,6 +31,19 @@ io.on("connection", function (socket) {
         io.emit("sendData", { data })
     });
 
+    //Tạo room khi có sự kiện tạo
+    socket.on("createRoom", (data) => {
+       console.log(data); 
+       room.push(data);
+       socket.join(data);
+       io.sockets.emit("sendRoomList", { room });
+    });
+
+    //Trả về room khi không có sự kiện nào gọi đến
+    socket.on("getRoom", () => {
+        io.sockets.emit("roomList", {room});
+    });
+    
 });
 
 app.get("/", (req, res) => {
