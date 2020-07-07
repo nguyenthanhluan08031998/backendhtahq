@@ -185,9 +185,9 @@ ALTER TABLE `dataproject`.`va`
 ADD COLUMN `IsChange` INT NOT NULL DEFAULT 0;
 ALTER TABLE `dataproject`.`wordlike` 
 ADD COLUMN `IsChange` INT NOT NULL DEFAULT 0;
+ALTER TABLE `dataproject`.`av` 
+ADD COLUMN `YoutubeLink` nvarchar(500) DEFAULT null;
 /*30/6/2020*/
-ALTER TABLE `dataproject`.`topic` 
-ADD COLUMN `Image` VARCHAR(45) NULL AFTER `IsChange`;
 END //
 /*DELIMITER ;*/
 CALL `?`();
