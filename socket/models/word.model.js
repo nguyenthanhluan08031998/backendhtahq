@@ -10,14 +10,18 @@ module.exports = {
         return words[0];
     },
 
-    isWordValid: (word, preWord) => {
+    isWordValid: async (word, preWord) => {
+        const ret = await db.load(`SELECT * FROM av WHERE av.Word = '${word}'`);
+        console.log(ret);
+        if(ret.length === 0){
+            return false;
+        }
         const lastChar = preWord.slice(-1);
         console.log(`${preWord}: ${lastChar}`);
         const firstChar = word.charAt(0);
         console.log(`${word}: ${firstChar}`);
         
         if(lastChar === firstChar){
-            console.log(`true`);
             return true;
         }
         return false;

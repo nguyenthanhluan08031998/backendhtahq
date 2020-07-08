@@ -4,21 +4,18 @@ var server = require("http").Server(app);
 var port = 5002;
 var io = require("socket.io")(server);
 const wordModel = require('./models/word.model');
-server.listen(port, () => console.log("Server running in port " + port));
+server.listen(port, () => console.log("Socket running in port " + port));
 
 let data = [];
 var roomId = 0;
 var roomList = [];
 var gameList = [];
 
-var Room = function(id, name, numOfPlayers, password, time, players, owner){
+var Game = function (id, time, playerOrder, currentWord) {
     this.id = id;
-    this.name = name;
-    this.numOfPlayers = numOfPlayers;
-    this.password = password;
     this.time = time;
-    this.players = players;
-    this.owner = owner;
+    this.playerOrder = playerOrder;
+    this.currentWord = currentWord;
 
     var interval;
     this.startTimer = () => {
@@ -26,7 +23,21 @@ var Room = function(id, name, numOfPlayers, password, time, players, owner){
         interval = setInterval(() => {
             console.log(tempTime);
             if(tempTime === 0){
+                console.log(`time out`);
                 clearInterval(interval);
+                delete this.leavePlayer;
+                if(this.playerOrder.length > 1){
+                    console.log(`player order length: ${this.playerOrder.length}`);
+                    const eliminatedPlayer = this.playerOrder[0].playerId;
+                    this.playerOrder.shift();
+                    this.eliminatedPlayer = eliminatedPlayer;
+                    console.log(`sendGame time out ${JSON.stringify(this)}`);
+                    if(this.playerOrder.length !== 1){
+                        this.startTimer();
+                    }
+                }
+
+                io.in(this.id).emit("sendGame", this);
             }
             io.in(this.id).emit("sendTimer", tempTime);
             tempTime = tempTime - 1;
@@ -36,6 +47,17 @@ var Room = function(id, name, numOfPlayers, password, time, players, owner){
     this.stopTimer = () =>{
         clearInterval(interval);
     }
+    
+}
+
+var Room = function(id, name, numOfPlayers, password, time, players, owner){
+    this.id = id;
+    this.name = name;
+    this.numOfPlayers = numOfPlayers;
+    this.password = password;
+    this.time = time;
+    this.players = players;
+    this.owner = owner;
 }
 
 io.on("connection", function (socket) {
@@ -66,11 +88,11 @@ io.on("connection", function (socket) {
         console.log(`on create room : ${JSON.stringify(data)}`);
         roomId++;
         var newRoom = new Room(roomId, data.name, data.numOfPlayers, data.password, data.time, data.players, data.owner);
-        console.log(newRoom);
         roomList.push(newRoom);
         socket.join(roomId);
         console.log(`emit sendRoomToOwner: ` + JSON.stringify(data));
         io.to(socket.id).emit('sendRoomOwner', newRoom);
+        io.sockets.emit("roomList", {roomList});
     });
 
     //Trả về room khi không có sự kiện nào gọi đến
@@ -97,10 +119,55 @@ io.on("connection", function (socket) {
                 item.players.push(data.player);
                 console.log('emit send room info: ' + JSON.stringify(item));
                 io.in(data.roomId).emit("sendRoomInfo", item);
+                io.sockets.emit("roomList", {roomList});
                 return;
             }
         });
     });
+
+    socket.on("leaveRoom", data => {
+        console.log(`on leave room: ${data.roomId}, ${data.playerId}`);
+        let room = roomList.find(item=>item.id === data.roomId);
+        if(room != null){
+            room.players = room.players.filter(item=>item.playerId !== data.playerId) //remove player from room
+            if(room.players.length === 0){
+                roomList = roomList.filter(item=>item.id !== data.roomId) //remove room if no player left
+            }
+        }
+        socket.leave(roomId);
+        io.sockets.emit("roomList", {roomList});
+        io.in(data.roomId).emit("sendRoomInfo", room);
+    });
+
+    socket.on("leaveGame", data => {
+        console.log(`on leave game: ${data.gameId}, ${data.playerId}`);
+        const game = gameList.find(item=>item.id === data.gameId);
+        if(game != null){
+            let player = game.playerOrder.find(item=>item.playerId == data.playerId);
+            if(player != null){
+                game.leavePlayer = player.playerName;
+            }
+
+            game.playerOrder = game.playerOrder.filter(item=>item.playerId !== data.playerId) //remove player from room
+            socket.leave(roomId);
+
+            if(game.playerOrder.length > 1){
+                game.stopTimer();
+                game.startTimer();
+            }else{
+                game.stopTimer();
+            }
+            console.log(`emit leave game ${JSON.stringify(game)}`);
+            io.in(data.gameId).emit("sendGame", game);
+        }
+    });
+
+    socket.on("joinGame", data => {
+        console.log(`on join game`);
+        socket.leave(data.roomId);
+        socket.join(data.gameId);
+        
+    })
 
     socket.on("startGame",async roomId => {
         console.log(`on start game`);
@@ -112,50 +179,46 @@ io.on("connection", function (socket) {
             let playerOrder = room.players;
             const ret = await wordModel.getRandomWord();
             console.log(`currentWord: ${ret.Word}`);
+            const gameId = 10000 + roomId;
+            var game = new Game(gameId, room.time, playerOrder, ret.Word);
             
-            const entity = {
-                id: roomId,
-                playerOrder,
-                currentWord: ret.Word,
-            }
-            
-            gameList.push(entity);
+            gameList.push(game); // add to game list
+            roomList = roomList.filter(item=>item.id !== roomId) //remove room in room list
             console.log(`emit send game`);
-            io.in(roomId).emit("sendGame", entity);
+            io.in(roomId).emit("sendGame", game);
             console.log(`emit timer`);
-        
-            room.startTimer();
-
+            game.startTimer();
+            console.log(`emit room list`);
+            io.sockets.emit("roomList", {roomList});
         }else{
             console.log(`room null`);
         }
     });
 
     socket.on('sendWord',async data => {
-        var room = roomList.find(item=>item.id === data.id);
-        room.stopTimer();
-        console.log('on sendWord');
-        console.log(data);
-        const gameId = data.id;
-        const game = gameList.find(item=>item.id === gameId);
-        if(game != null){
-            if(wordModel.isWordValid(data.word, game.currentWord)){
-                game.playerOrder.push(game.playerOrder.shift());
-                game.currentWord = data.word;
-                game.eliminatedPlayer = 0;
-                io.in(gameId).emit('sendGame', game);
-                room.startTimer();
+        var gameItem = gameList.find(item=>item.id === data.id);
+        if(gameItem !== null){
+            gameItem.stopTimer();
+            console.log('on sendWord');
+            console.log(data);
+            const gameId = gameItem.id;
+            if(await wordModel.isWordValid(data.word, gameItem.currentWord)){
+                console.log('corret word');
+                gameItem.playerOrder.push(gameItem.playerOrder.shift());
+                gameItem.currentWord = data.word;
+                gameItem.eliminatedPlayer = 0;
+                io.in(gameId).emit('sendGame', gameItem);
+                gameItem.startTimer();
             }else{
-                const eliminatedPlayer = game.playerOrder[0].playerId;
-                game.playerOrder.shift();
-                game.eliminatedPlayer = eliminatedPlayer;
-                io.in(gameId).emit('sendGame', game);
-                if(game.playerOrder.length !== 1){
-                    room.startTimer();
+                console.log('wrong word');
+                const eliminatedPlayer = gameItem.playerOrder[0].playerId;
+                gameItem.playerOrder.shift();
+                gameItem.eliminatedPlayer = eliminatedPlayer;
+                io.in(gameId).emit('sendGame', gameItem);
+                if(gameItem.playerOrder.length !== 1){
+                    gameItem.startTimer();
                 }
             }
-        }else{
-            console.log(`game null`);
         }
     });
     
