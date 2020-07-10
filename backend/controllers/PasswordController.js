@@ -37,7 +37,7 @@ router.post('/addOrUpdate', async (req, res) => {
 
     const email = user.Email
     const users = await model.checkExist(email)
-    if (users && users.length > 0) {
+    if (users && users.length > 0 && user.Id == 0) {
         return res.json({ "exist": true })
     }
 
