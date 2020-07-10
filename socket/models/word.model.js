@@ -12,7 +12,7 @@ module.exports = {
 
     isWordValid: async (word, preWord) => {
         const ret = await db.load(`SELECT * FROM av WHERE av.Word = '${word}'`);
-        console.log(ret);
+        console.log(`ret length: ${ret.length}`);
         if(ret.length === 0){
             return false;
         }

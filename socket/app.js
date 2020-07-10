@@ -16,6 +16,7 @@ var Game = function (id, time, playerOrder, currentWord) {
     this.time = time;
     this.playerOrder = playerOrder;
     this.currentWord = currentWord;
+    this.historyWord = [];
 
     var interval;
     this.startTimer = () => {
@@ -221,7 +222,7 @@ io.on("connection", function (socket) {
             const ret = await wordModel.getRandomWord();
             console.log(`currentWord: ${ret.Word}`);
             const gameId = 10000 + roomId;
-            var game = new Game(gameId, room.time, playerOrder, ret.Word);
+            let game = new Game(gameId, room.time, playerOrder, ret.Word);
             
             gameList.push(game); // add to game list
             for (let item of roomList) {
@@ -243,39 +244,20 @@ io.on("connection", function (socket) {
     });
 
     socket.on('sendWord',async data => {
-        var gameItem = gameList.find(item=>item.id === data.id);
+        let gameItem = gameList.find(item=>item.id === data.id);
+        console.log(`on sendWord ${JSON.stringify(gameItem)}`);
         if(gameItem !== null){
             gameItem.stopTimer();
-            console.log('on sendWord');
             console.log(data);
             const gameId = gameItem.id;
-            if(await wordModel.isWordValid(data.word, gameItem.currentWord)){
-                console.log('corret word');
-                gameItem.playerOrder.push(gameItem.playerOrder.shift());
-                gameItem.currentWord = data.word;
-                gameItem.eliminatedPlayer = 0;
-
-                const result = {
-                    eliminatedPlayerId: 0,
-                    nextPlayer: gameItem.playerOrder[0].playerName,
-                    isCorrect: 'true'
-                }
-                io.in(gameId).emit('sendResult', result); //display answer result for 2 secondss
-                setTimeout(()=>{
-                    io.in(gameId).emit('sendGame', gameItem);
-                }, 2000);
-
-                gameItem.startTimer();
-            }else{
-                console.log('wrong word');
+            const historyWord = gameItem.historyWord.find(item=>item.word == data.word);
+            if(historyWord !== undefined){
                 const eliminatedPlayer = gameItem.playerOrder[0].playerId;
                 gameItem.playerOrder.shift();
-                gameItem.eliminatedPlayer = eliminatedPlayer;
-                
                 const result = {
                     eliminatedPlayerId: eliminatedPlayer,
                     nextPlayer: gameItem.playerOrder[0].playerName,
-                    isCorrect: 'false'
+                    isCorrect: 'wordExisted'
                 }
                 
                 io.in(gameId).emit('sendResult', result); //display answer result for 2 seconds
@@ -289,6 +271,55 @@ io.on("connection", function (socket) {
                         io.in(gameId).emit('sendGame', gameItem);
                     }, 2000);
                     gameItem.startTimer();
+                }
+            }else{
+                if(await wordModel.isWordValid(data.word, gameItem.currentWord)){
+                    console.log('corret word');
+                    const entity = {
+                        playerName: gameItem.playerOrder[0].playerName,
+                        word: data.word
+                    }
+                    gameItem.historyWord.push(entity);
+                    gameItem.playerOrder.push(gameItem.playerOrder.shift());
+                    gameItem.currentWord = data.word;
+                    gameItem.eliminatedPlayer = 0;
+    
+                    const result = {
+                        eliminatedPlayerId: 0,
+                        nextPlayer: gameItem.playerOrder[0].playerName,
+                        isCorrect: 'true'
+                    }
+                    io.in(gameId).emit('sendResult', result); //display answer result for 2 secondss
+                    setTimeout(()=>{
+    
+                        io.in(gameId).emit('sendGame', gameItem);
+                    }, 2000);
+    
+                    gameItem.startTimer();
+                }else{
+                    console.log('wrong word');
+                    const eliminatedPlayer = gameItem.playerOrder[0].playerId;
+                    gameItem.playerOrder.shift();
+                    gameItem.eliminatedPlayer = eliminatedPlayer;
+                    
+                    const result = {
+                        eliminatedPlayerId: eliminatedPlayer,
+                        nextPlayer: gameItem.playerOrder[0].playerName,
+                        isCorrect: 'false'
+                    }
+                    
+                    io.in(gameId).emit('sendResult', result); //display answer result for 2 seconds
+                    if(gameItem.playerOrder.length === 1){
+                        console.log(`emit send game end`);
+                        setTimeout(()=>{
+                            io.in(gameId).emit('sendGameEnd', gameItem.playerOrder[0].playerName); //Send game result to all player in game room
+                        }, 2000);
+                    }else{
+                        setTimeout(()=>{
+                            io.in(gameId).emit('sendGame', gameItem);
+                        }, 2000);
+                        gameItem.startTimer();
+                    }
                 }
             }
         }
@@ -316,7 +347,7 @@ io.on("connection", function (socket) {
             roomList.push(newRoom);
             socket.join(newRoomId);
             console.log('emit send room info: ' + JSON.stringify(newRoom));
-            io.in(socket.id).emit("sendRoomInfo", newRoom);
+            io.to(socket.id).emit("sendRoomInfo", newRoom);
             socket.leave(data.gameId);
             const activeRoom = roomList.filter(item=>item.isActive===true);
             io.sockets.emit("roomList", {activeRoom});
@@ -331,7 +362,8 @@ io.on("connection", function (socket) {
                     socket.join(newRoomId);
                     item.players.push(player);
                     console.log('emit send room info: ' + JSON.stringify(room));
-                    io.in(newRoomId).emit("sendRoomInfo", room);
+                    io.to(socket.id).emit("sendRoomInfo", room);
+                    io.to(newRoomId).emit("sendRoomInfo", room);
                     socket.leave(data.gameId);
                     const activeRoom = roomList.filter(item=>item.isActive===true);
                     io.sockets.emit("roomList", {activeRoom});
@@ -342,6 +374,14 @@ io.on("connection", function (socket) {
         const activeRoom = roomList.filter(item=>item.isActive===true);
         io.sockets.emit("roomList", {activeRoom});
     });
+
+    socket.on('getHistoryWord', gameId => {
+        console.log(`on getHistoryWord: ${JSON.stringify(gameId)}`);
+        console.log(`game list: ${JSON.stringify(gameList)}`);
+        const game = gameList.find(item=>item.id === gameId);
+        console.log(`emit history word: ${JSON.stringify(game.historyWord)}`);
+        io.in(socket.id).emit('sendHistoryWord', game.historyWord);
+    })
     
 });
 
