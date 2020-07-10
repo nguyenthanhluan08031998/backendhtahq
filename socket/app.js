@@ -27,11 +27,10 @@ var Game = function (id, time, playerOrder, currentWord) {
                 clearInterval(interval);
                 delete this.leavePlayer;
                 
+                const eliminatedPlayer = this.playerOrder[0].playerId;
                 if(this.playerOrder.length > 1){
                     console.log(`player order length: ${this.playerOrder.length}`);
-                    var eliminatedPlayer = this.playerOrder[0].playerId;
                     this.playerOrder.shift();
-                    this.eliminatedPlayer = eliminatedPlayer;
                     console.log(`sendGame time out ${JSON.stringify(this)}`);
                     if(this.playerOrder.length !== 1){
                         this.startTimer();
@@ -47,7 +46,7 @@ var Game = function (id, time, playerOrder, currentWord) {
                 if(this.playerOrder.length === 1){
                     console.log(`emit send game end`);
                     setTimeout(()=>{
-                        io.in(this.id).emit('sendGameEnd', gameList[0].playerOrder[0].playerName);
+                        io.in(this.id).emit('sendGameEnd', this.playerOrder[0].playerName);
                     }, 2000);
                 }else{
                     setTimeout(()=>{
@@ -116,22 +115,22 @@ io.on("connection", function (socket) {
     });
 
     //Trả về room khi không có sự kiện nào gọi đến
-    socket.on("getRoom", () => {
+    socket.on("getRoom", () => { //Get room list when access room list UI
         const activeRoom = roomList.filter(item=>item.isActive===true);
         io.sockets.emit("roomList", {activeRoom});
     });
 
 
-    socket.on('getRoomById', roomId =>{
+    socket.on('getRoomById', roomId =>{ //Get room when join room from room list
         console.log(`on getRoomById`);
         
         const id = roomId;
         const room = roomList.find(item=>item.id===id);
         console.log(`emit send Room for info`);
-        io.to(socket.id).emit('sendRoomInfo', room);
+        io.to(socket.id).emit('sendRoomInfo', room); //send room info for all player in room
     });
 
-    socket.on("joinRoom", (data) => {
+    socket.on("joinRoom", (data) => { //Join room from room list UI
         console.log('on joinRoom: ');
         console.log(data);
         socket.join(data.roomId);
@@ -141,7 +140,7 @@ io.on("connection", function (socket) {
                 console.log('emit send room info: ' + JSON.stringify(item));
                 io.in(data.roomId).emit("sendRoomInfo", item);
                 const activeRoom = roomList.filter(item=>item.isActive===true);
-                io.sockets.emit("roomList", {activeRoom});
+                io.sockets.emit("roomList", {activeRoom}); 
                 return;
             }
         });
@@ -152,8 +151,13 @@ io.on("connection", function (socket) {
         let room = roomList.find(item=>item.id === data.roomId);
         if(room != null){
             room.players = room.players.filter(item=>item.playerId !== data.playerId) //remove player from room
-            if(room.players.length === 0){
-                roomList = roomList.filter(item=>item.id !== data.roomId) //remove room if no player left
+            if(room.players.length === 0){ //set room inactive if no player left
+                for (const item of roomList) {
+                    if(item.id === data.roomId){
+                        item.isActive = false;
+                        break;
+                    }
+                }
             }
         }
         socket.leave(roomId);
@@ -169,35 +173,37 @@ io.on("connection", function (socket) {
             let player = game.playerOrder.find(item=>item.playerId == data.playerId);
             if(player != null){
                 game.leavePlayer = player.playerName;
+                game.playerOrder = game.playerOrder.filter(item=>item.playerId !== data.playerId) //remove player from room
+                socket.leave(data.gameId);
+            }else{
+                socket.leave(data.gameId);
+                return;
             }
 
-            game.playerOrder = game.playerOrder.filter(item=>item.playerId !== data.playerId) //remove player from room
-            socket.leave(data.gameId);
+            if(game.playerOrder.length === 0){
+                return;
+            }
+            
 
             if(game.playerOrder.length === 1){
+                game.stopTimer();
                 console.log(`emit send game end`);
                 setTimeout(()=>{
-                    io.in(game.id).emit('sendGameEnd', gameList[0].playerOrder[0].playerName);
+                    io.in(game.id).emit('sendGameEnd', game.playerOrder[0].playerName);
                 }, 2000);
             }else{
                 setTimeout(()=>{
                     io.in(game.id).emit('sendGame', game);
                 }, 2000);
-                game.startTimer();
-            }
-
-            if(game.playerOrder.length > 1){
                 game.stopTimer();
                 game.startTimer();
-            }else{
-                game.stopTimer();
             }
             console.log(`emit leave game ${JSON.stringify(game)}`);
             io.in(game.id).emit("sendGame", game);
         }
     });
 
-    socket.on("joinGame", data => {
+    socket.on("joinGame", data => { // when start, all player leave room and join game
         console.log(`on join game`);
         socket.leave(data.roomId);
         socket.join(data.gameId);
@@ -254,7 +260,7 @@ io.on("connection", function (socket) {
                     nextPlayer: gameItem.playerOrder[0].playerName,
                     isCorrect: 'true'
                 }
-                io.in(gameId).emit('sendResult', result); //display game result for 2 seconds
+                io.in(gameId).emit('sendResult', result); //display answer result for 2 secondss
                 setTimeout(()=>{
                     io.in(gameId).emit('sendGame', gameItem);
                 }, 2000);
@@ -272,11 +278,11 @@ io.on("connection", function (socket) {
                     isCorrect: 'false'
                 }
                 
-                io.in(gameId).emit('sendResult', result); //display game result for 2 seconds
+                io.in(gameId).emit('sendResult', result); //display answer result for 2 seconds
                 if(gameItem.playerOrder.length === 1){
                     console.log(`emit send game end`);
                     setTimeout(()=>{
-                        io.in(gameId).emit('sendGameEnd', gameList[0].playerOrder[0].playerName);
+                        io.in(gameId).emit('sendGameEnd', gameItem.playerOrder[0].playerName); //Send game result to all player in game room
                     }, 2000);
                 }else{
                     setTimeout(()=>{
@@ -294,8 +300,12 @@ io.on("connection", function (socket) {
         console.log(`old room Id: ${id}`);
         const newRoomId = id + 100;
         const room = roomList.find(item => item.id === newRoomId);
-        if(room === null){
+        console.log(JSON.stringify(room));
+        if(room === undefined){
+            console.log(`room not exitst`);
+            console.log(`room List: ${JSON.stringify(roomList)}`);
             const oldRoom = roomList.find(item=>item.id === id);
+            console.log(`old room: ${JSON.stringify(oldRoom)}`);
             const player = {
                 playerId: data.playerId,
                 playerName: data.playerName
@@ -305,27 +315,30 @@ io.on("connection", function (socket) {
             var newRoom = new Room(newRoomId, oldRoom.name, oldRoom.numOfPlayers, oldRoom.password, oldRoom.time, players, oldRoom.owner, true);
             roomList.push(newRoom);
             socket.join(newRoomId);
+            console.log('emit send room info: ' + JSON.stringify(newRoom));
+            io.in(socket.id).emit("sendRoomInfo", newRoom);
+            socket.leave(data.gameId);
             const activeRoom = roomList.filter(item=>item.isActive===true);
             io.sockets.emit("roomList", {activeRoom});
         }else{
+            console.log(`room exitst`);
             roomList.forEach(item=>{
                 const player = {
                     playerId: data.playerId,
                     playerName: data.playerName
                 };
                 if(item.id == newRoomId){
+                    socket.join(newRoomId);
                     item.players.push(player);
-                    console.log('emit send room info: ' + JSON.stringify(item));
-                    io.in(newRoomId).emit("sendRoomInfo", item);
+                    console.log('emit send room info: ' + JSON.stringify(room));
+                    io.in(newRoomId).emit("sendRoomInfo", room);
+                    socket.leave(data.gameId);
                     const activeRoom = roomList.filter(item=>item.isActive===true);
                     io.sockets.emit("roomList", {activeRoom});
                     return;
                 }
             });
         }
-        
-        console.log(`emit sendRoomToOwner: ` + JSON.stringify(data));
-        io.to(socket.id).emit('sendRoomOwner', newRoom);
         const activeRoom = roomList.filter(item=>item.isActive===true);
         io.sockets.emit("roomList", {activeRoom});
     });
