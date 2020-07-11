@@ -1,6 +1,7 @@
 var express = require("express");
 var app = express();
 var server = require("http").Server(app);
+const moment = require('moment');
 var port = 5002;
 var io = require("socket.io")(server);
 const wordModel = require('./models/word.model');
@@ -11,11 +12,13 @@ var roomId = 0;
 var roomList = [];
 var gameList = [];
 
-var Game = function (id, time, playerOrder, currentWord) {
+var Game = function (id, time, playerOrder, currentWord, date, roomName) {
     this.id = id;
     this.time = time;
     this.playerOrder = playerOrder;
     this.currentWord = currentWord;
+    this.date = date;
+    this.roomName = roomName;
     this.historyWord = [];
 
     var interval;
@@ -27,7 +30,6 @@ var Game = function (id, time, playerOrder, currentWord) {
                 console.log(`time out`);
                 clearInterval(interval);
                 delete this.leavePlayer;
-                
                 const eliminatedPlayer = this.playerOrder[0].playerId;
                 if(this.playerOrder.length > 1){
                     console.log(`player order length: ${this.playerOrder.length}`);
@@ -47,7 +49,11 @@ var Game = function (id, time, playerOrder, currentWord) {
                 if(this.playerOrder.length === 1){
                     console.log(`emit send game end`);
                     setTimeout(()=>{
-                        io.in(this.id).emit('sendGameEnd', this.playerOrder[0].playerName);
+                        const entity = {
+                            winner: this.playerOrder[0].playerName,
+                            historyWord: this.historyWord
+                        }
+                        io.in(this.id).emit('sendGameEnd', entity);
                     }, 2000);
                 }else{
                     setTimeout(()=>{
@@ -190,7 +196,11 @@ io.on("connection", function (socket) {
                 game.stopTimer();
                 console.log(`emit send game end`);
                 setTimeout(()=>{
-                    io.in(game.id).emit('sendGameEnd', game.playerOrder[0].playerName);
+                    const entity = {
+                        winner: entity.playerOrder[0].playerName,
+                        historyWord: entity.historyWord
+                    }
+                    io.in(game.id).emit('sendGameEnd', entity);
                 }, 2000);
             }else{
                 setTimeout(()=>{
@@ -222,8 +232,8 @@ io.on("connection", function (socket) {
             const ret = await wordModel.getRandomWord();
             console.log(`currentWord: ${ret.Word}`);
             const gameId = 10000 + roomId;
-            let game = new Game(gameId, room.time, playerOrder, ret.Word);
-            
+            const dateTime = moment().valueOf();
+            let game = new Game(gameId, room.time, playerOrder, ret.Word, dateTime, room.name);
             gameList.push(game); // add to game list
             for (let item of roomList) {
                 if(item.id === roomId){
@@ -264,7 +274,11 @@ io.on("connection", function (socket) {
                 if(gameItem.playerOrder.length === 1){
                     console.log(`emit send game end`);
                     setTimeout(()=>{
-                        io.in(gameId).emit('sendGameEnd', gameItem.playerOrder[0].playerName); //Send game result to all player in game room
+                        const entity = {
+                            winner: gameItem.playerOrder[0].playerName,
+                            historyWord: gameItem.historyWord
+                        }
+                        io.in(gameId).emit('sendGameEnd', entity); //Send game result to all player in game room
                     }, 2000);
                 }else{
                     setTimeout(()=>{
@@ -312,7 +326,11 @@ io.on("connection", function (socket) {
                     if(gameItem.playerOrder.length === 1){
                         console.log(`emit send game end`);
                         setTimeout(()=>{
-                            io.in(gameId).emit('sendGameEnd', gameItem.playerOrder[0].playerName); //Send game result to all player in game room
+                            const entity = {
+                                winner: gameItem.playerOrder[0].playerName,
+                                historyWord: gameItem.historyWord
+                            }
+                            io.in(gameId).emit('sendGameEnd', entity); //Send game result to all player in game room
                         }, 2000);
                     }else{
                         setTimeout(()=>{
