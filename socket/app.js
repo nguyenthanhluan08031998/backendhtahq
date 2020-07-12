@@ -26,16 +26,16 @@ var Game = function (id, time, playerOrder, currentWord, date, roomName) {
         var tempTime = this.time;
         interval = setInterval(() => {
             console.log(tempTime);
-            if(tempTime === 0){
+            if (tempTime === 0) {
                 console.log(`time out`);
                 clearInterval(interval);
                 delete this.leavePlayer;
                 const eliminatedPlayer = this.playerOrder[0].playerId;
-                if(this.playerOrder.length > 1){
+                if (this.playerOrder.length > 1) {
                     console.log(`player order length: ${this.playerOrder.length}`);
                     this.playerOrder.shift();
                     console.log(`sendGame time out ${JSON.stringify(this)}`);
-                    if(this.playerOrder.length !== 1){
+                    if (this.playerOrder.length !== 1) {
                         this.startTimer();
                     }
                 }
@@ -46,17 +46,17 @@ var Game = function (id, time, playerOrder, currentWord, date, roomName) {
                     isCorrect: 'timeOut'
                 }
                 io.in(this.id).emit('sendResult', result); //display game result for 2 seconds
-                if(this.playerOrder.length === 1){
+                if (this.playerOrder.length === 1) {
                     console.log(`emit send game end`);
-                    setTimeout(()=>{
+                    setTimeout(() => {
                         const entity = {
                             winner: this.playerOrder[0].playerName,
                             historyWord: this.historyWord
                         }
                         io.in(this.id).emit('sendGameEnd', entity);
                     }, 2000);
-                }else{
-                    setTimeout(()=>{
+                } else {
+                    setTimeout(() => {
                         io.in(this.id).emit('sendGame', this);
                     }, 2000);
                     this.startTimer();
@@ -67,13 +67,13 @@ var Game = function (id, time, playerOrder, currentWord, date, roomName) {
         }, 1000);
     }
 
-    this.stopTimer = () =>{
+    this.stopTimer = () => {
         clearInterval(interval);
     }
-    
+
 }
 
-var Room = function(id, name, numOfPlayers, password, time, players, owner, isActive){
+var Room = function (id, name, numOfPlayers, password, time, players, owner, isActive) {
     this.id = id;
     this.name = name;
     this.numOfPlayers = numOfPlayers;
@@ -116,23 +116,23 @@ io.on("connection", function (socket) {
         socket.join(roomId);
         console.log(`emit sendRoomToOwner: ` + JSON.stringify(data));
         io.to(socket.id).emit('sendRoomOwner', newRoom);
-        const activeRoom = roomList.filter(item=>item.isActive===true);
+        const activeRoom = roomList.filter(item => item.isActive === true);
         console.log(`emit room list: ` + JSON.stringify(activeRoom));
-        io.sockets.emit("roomList", {activeRoom});
+        io.sockets.emit("roomList", { activeRoom });
     });
 
     //Trả về room khi không có sự kiện nào gọi đến
     socket.on("getRoom", () => { //Get room list when access room list UI
-        const activeRoom = roomList.filter(item=>item.isActive===true);
-        io.sockets.emit("roomList", {activeRoom});
+        const activeRoom = roomList.filter(item => item.isActive === true);
+        io.sockets.emit("roomList", { activeRoom });
     });
 
 
-    socket.on('getRoomById', roomId =>{ //Get room when join room from room list
+    socket.on('getRoomById', roomId => { //Get room when join room from room list
         console.log(`on getRoomById`);
-        
+
         const id = roomId;
-        const room = roomList.find(item=>item.id===id);
+        const room = roomList.find(item => item.id === id);
         console.log(`emit send Room for info`);
         io.to(socket.id).emit('sendRoomInfo', room); //send room info for all player in room
     });
@@ -141,13 +141,13 @@ io.on("connection", function (socket) {
         console.log('on joinRoom: ');
         console.log(data);
         socket.join(data.roomId);
-        roomList.forEach(item=>{
-            if(item.id == data.roomId){
+        roomList.forEach(item => {
+            if (item.id == data.roomId) {
                 item.players.push(data.player);
                 console.log('emit send room info: ' + JSON.stringify(item));
                 io.in(data.roomId).emit("sendRoomInfo", item);
-                const activeRoom = roomList.filter(item=>item.isActive===true);
-                io.sockets.emit("roomList", {activeRoom}); 
+                const activeRoom = roomList.filter(item => item.isActive === true);
+                io.sockets.emit("roomList", { activeRoom });
                 return;
             }
         });
@@ -155,12 +155,12 @@ io.on("connection", function (socket) {
 
     socket.on("leaveRoom", data => {
         console.log(`on leave room: ${data.roomId}, ${data.playerId}`);
-        let room = roomList.find(item=>item.id === data.roomId);
-        if(room != null){
-            room.players = room.players.filter(item=>item.playerId !== data.playerId) //remove player from room
-            if(room.players.length === 0){ //set room inactive if no player left
+        let room = roomList.find(item => item.id === data.roomId);
+        if (room != null) {
+            room.players = room.players.filter(item => item.playerId !== data.playerId) //remove player from room
+            if (room.players.length === 0) { //set room inactive if no player left
                 for (const item of roomList) {
-                    if(item.id === data.roomId){
+                    if (item.id === data.roomId) {
                         item.isActive = false;
                         break;
                     }
@@ -168,42 +168,42 @@ io.on("connection", function (socket) {
             }
         }
         socket.leave(roomId);
-        const activeRoom = roomList.filter(item=>item.isActive===true);
-        io.sockets.emit("roomList", {activeRoom});
+        const activeRoom = roomList.filter(item => item.isActive === true);
+        io.sockets.emit("roomList", { activeRoom });
         io.in(data.roomId).emit("sendRoomInfo", room);
     });
 
     socket.on("leaveGame", data => {
         console.log(`on leave game: ${data.gameId}, ${data.playerId}`);
-        const game = gameList.find(item=>item.id === data.gameId);
-        if(game != null){
-            let player = game.playerOrder.find(item=>item.playerId == data.playerId);
-            if(player != null){
+        const game = gameList.find(item => item.id === data.gameId);
+        if (game != null) {
+            let player = game.playerOrder.find(item => item.playerId == data.playerId);
+            if (player != null) {
                 game.leavePlayer = player.playerName;
-                game.playerOrder = game.playerOrder.filter(item=>item.playerId !== data.playerId) //remove player from room
+                game.playerOrder = game.playerOrder.filter(item => item.playerId !== data.playerId) //remove player from room
                 socket.leave(data.gameId);
-            }else{
+            } else {
                 socket.leave(data.gameId);
                 return;
             }
 
-            if(game.playerOrder.length === 0){
+            if (game.playerOrder.length === 0) {
                 return;
             }
-            
 
-            if(game.playerOrder.length === 1){
+
+            if (game.playerOrder.length === 1) {
                 game.stopTimer();
                 console.log(`emit send game end`);
-                setTimeout(()=>{
+                setTimeout(() => {
                     const entity = {
-                        winner: entity.playerOrder[0].playerName,
-                        historyWord: entity.historyWord
+                        winner: game.playerOrder[0].playerName,
+                        historyWord: game.historyWord
                     }
                     io.in(game.id).emit('sendGameEnd', entity);
                 }, 2000);
-            }else{
-                setTimeout(()=>{
+            } else {
+                setTimeout(() => {
                     io.in(game.id).emit('sendGame', game);
                 }, 2000);
                 game.stopTimer();
@@ -218,16 +218,16 @@ io.on("connection", function (socket) {
         console.log(`on join game`);
         socket.leave(data.roomId);
         socket.join(data.gameId);
-        
+
     })
 
-    socket.on("startGame",async roomId => {
+    socket.on("startGame", async roomId => {
         console.log(`on start game`);
         console.log(`data: ${roomId}`);
-        
+
         const room = roomList.find(item => item.id === roomId);
         console.log(room);
-        if(room != null){
+        if (room != null) {
             let playerOrder = room.players;
             const ret = await wordModel.getRandomWord();
             console.log(`currentWord: ${ret.Word}`);
@@ -236,7 +236,7 @@ io.on("connection", function (socket) {
             let game = new Game(gameId, room.time, playerOrder, ret.Word, dateTime, room.name);
             gameList.push(game); // add to game list
             for (let item of roomList) {
-                if(item.id === roomId){
+                if (item.id === roomId) {
                     item.isActive = false;
                     break;
                 }
@@ -246,22 +246,22 @@ io.on("connection", function (socket) {
             console.log(`emit timer`);
             game.startTimer();
             console.log(`emit room list`);
-            const activeRoom = roomList.filter(item=>item.isActive===true);
-            io.sockets.emit("roomList", {activeRoom});
-        }else{
+            const activeRoom = roomList.filter(item => item.isActive === true);
+            io.sockets.emit("roomList", { activeRoom });
+        } else {
             console.log(`room null`);
         }
     });
 
-    socket.on('sendWord',async data => {
-        let gameItem = gameList.find(item=>item.id === data.id);
+    socket.on('sendWord', async data => {
+        let gameItem = gameList.find(item => item.id === data.id);
         console.log(`on sendWord ${JSON.stringify(gameItem)}`);
-        if(gameItem !== null){
+        if (gameItem !== null) {
             gameItem.stopTimer();
             console.log(data);
             const gameId = gameItem.id;
-            const historyWord = gameItem.historyWord.find(item=>item.word == data.word);
-            if(historyWord !== undefined){
+            const historyWord = gameItem.historyWord.find(item => item.word == data.word);
+            if (historyWord !== undefined) {
                 const eliminatedPlayer = gameItem.playerOrder[0].playerId;
                 gameItem.playerOrder.shift();
                 const result = {
@@ -269,25 +269,25 @@ io.on("connection", function (socket) {
                     nextPlayer: gameItem.playerOrder[0].playerName,
                     isCorrect: 'wordExisted'
                 }
-                
+
                 io.in(gameId).emit('sendResult', result); //display answer result for 2 seconds
-                if(gameItem.playerOrder.length === 1){
+                if (gameItem.playerOrder.length === 1) {
                     console.log(`emit send game end`);
-                    setTimeout(()=>{
+                    setTimeout(() => {
                         const entity = {
                             winner: gameItem.playerOrder[0].playerName,
                             historyWord: gameItem.historyWord
                         }
                         io.in(gameId).emit('sendGameEnd', entity); //Send game result to all player in game room
                     }, 2000);
-                }else{
-                    setTimeout(()=>{
+                } else {
+                    setTimeout(() => {
                         io.in(gameId).emit('sendGame', gameItem);
                     }, 2000);
                     gameItem.startTimer();
                 }
-            }else{
-                if(await wordModel.isWordValid(data.word, gameItem.currentWord)){
+            } else {
+                if (await wordModel.isWordValid(data.word, gameItem.currentWord)) {
                     console.log('corret word');
                     const entity = {
                         playerName: gameItem.playerOrder[0].playerName,
@@ -297,43 +297,43 @@ io.on("connection", function (socket) {
                     gameItem.playerOrder.push(gameItem.playerOrder.shift());
                     gameItem.currentWord = data.word;
                     gameItem.eliminatedPlayer = 0;
-    
+
                     const result = {
                         eliminatedPlayerId: 0,
                         nextPlayer: gameItem.playerOrder[0].playerName,
                         isCorrect: 'true'
                     }
                     io.in(gameId).emit('sendResult', result); //display answer result for 2 secondss
-                    setTimeout(()=>{
-    
+                    setTimeout(() => {
+
                         io.in(gameId).emit('sendGame', gameItem);
                     }, 2000);
-    
+
                     gameItem.startTimer();
-                }else{
+                } else {
                     console.log('wrong word');
                     const eliminatedPlayer = gameItem.playerOrder[0].playerId;
                     gameItem.playerOrder.shift();
                     gameItem.eliminatedPlayer = eliminatedPlayer;
-                    
+
                     const result = {
                         eliminatedPlayerId: eliminatedPlayer,
                         nextPlayer: gameItem.playerOrder[0].playerName,
                         isCorrect: 'false'
                     }
-                    
+
                     io.in(gameId).emit('sendResult', result); //display answer result for 2 seconds
-                    if(gameItem.playerOrder.length === 1){
+                    if (gameItem.playerOrder.length === 1) {
                         console.log(`emit send game end`);
-                        setTimeout(()=>{
+                        setTimeout(() => {
                             const entity = {
                                 winner: gameItem.playerOrder[0].playerName,
                                 historyWord: gameItem.historyWord
                             }
                             io.in(gameId).emit('sendGameEnd', entity); //Send game result to all player in game room
                         }, 2000);
-                    }else{
-                        setTimeout(()=>{
+                    } else {
+                        setTimeout(() => {
                             io.in(gameId).emit('sendGame', gameItem);
                         }, 2000);
                         gameItem.startTimer();
@@ -350,10 +350,10 @@ io.on("connection", function (socket) {
         const newRoomId = id + 100;
         const room = roomList.find(item => item.id === newRoomId);
         console.log(JSON.stringify(room));
-        if(room === undefined){
+        if (room === undefined) {
             console.log(`room not exitst`);
             console.log(`room List: ${JSON.stringify(roomList)}`);
-            const oldRoom = roomList.find(item=>item.id === id);
+            const oldRoom = roomList.find(item => item.id === id);
             console.log(`old room: ${JSON.stringify(oldRoom)}`);
             const player = {
                 playerId: data.playerId,
@@ -367,40 +367,40 @@ io.on("connection", function (socket) {
             console.log('emit send room info: ' + JSON.stringify(newRoom));
             io.to(socket.id).emit("sendRoomInfo", newRoom);
             socket.leave(data.gameId);
-            const activeRoom = roomList.filter(item=>item.isActive===true);
-            io.sockets.emit("roomList", {activeRoom});
-        }else{
+            const activeRoom = roomList.filter(item => item.isActive === true);
+            io.sockets.emit("roomList", { activeRoom });
+        } else {
             console.log(`room exitst`);
-            roomList.forEach(item=>{
+            roomList.forEach(item => {
                 const player = {
                     playerId: data.playerId,
                     playerName: data.playerName
                 };
-                if(item.id == newRoomId){
+                if (item.id == newRoomId) {
                     socket.join(newRoomId);
                     item.players.push(player);
                     console.log('emit send room info: ' + JSON.stringify(room));
                     io.to(socket.id).emit("sendRoomInfo", room);
                     io.to(newRoomId).emit("sendRoomInfo", room);
                     socket.leave(data.gameId);
-                    const activeRoom = roomList.filter(item=>item.isActive===true);
-                    io.sockets.emit("roomList", {activeRoom});
+                    const activeRoom = roomList.filter(item => item.isActive === true);
+                    io.sockets.emit("roomList", { activeRoom });
                     return;
                 }
             });
         }
-        const activeRoom = roomList.filter(item=>item.isActive===true);
-        io.sockets.emit("roomList", {activeRoom});
+        const activeRoom = roomList.filter(item => item.isActive === true);
+        io.sockets.emit("roomList", { activeRoom });
     });
 
     socket.on('getHistoryWord', gameId => {
         console.log(`on getHistoryWord: ${JSON.stringify(gameId)}`);
         console.log(`game list: ${JSON.stringify(gameList)}`);
-        const game = gameList.find(item=>item.id === gameId);
+        const game = gameList.find(item => item.id === gameId);
         console.log(`emit history word: ${JSON.stringify(game.historyWord)}`);
         io.in(socket.id).emit('sendHistoryWord', game.historyWord);
     })
-    
+
 });
 
 app.get("/", (req, res) => {
