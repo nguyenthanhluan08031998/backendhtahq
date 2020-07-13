@@ -1,7 +1,13 @@
 const db = require('../utils/db');
 module.exports = {
-    getUserData: (table, condition) => {
-        return db.load(`select * from ${table} where (${condition}) or IsChange = 1`)
+    getUserData: (table, condition, IdUser) => {
+	if (IdUser != 0) {
+            return db.load(`select * from ${table} where IdUser = ${IdUser} and ((${condition}) or IsChange = 1)`)
+        }
+        else {
+            return db.load(`select * from ${table} where (${condition}) or IsChange = 1`)
+        }
+        
     },
     getAllUserData: (table, IdUser) => {
         if (IdUser != 0) {

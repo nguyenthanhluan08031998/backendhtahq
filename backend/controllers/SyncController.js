@@ -81,7 +81,7 @@ router.post('/getDataFromServer', async (req, res) => {
                 promise = await model.getAllUserData(table, IdUser)
             }
             else {
-                promise = await model.getUserData(table, condition)
+                promise = await model.getUserData(table, condition, IdUser)
             }
             var items = promiseToString(promise)
             if (items && items.length > 0) {
