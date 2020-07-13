@@ -312,7 +312,7 @@ io.on("connection", function (socket) {
                     gameItem.startTimer();
                 } else {
                     console.log('wrong word');
-                    let eliminatedPlayer
+                    let eliminatedPlayer = gameItem.playerOrder[0].playerId;
                     if(gameItem.playerOrder.length > 1){
                         eliminatedPlayer = gameItem.playerOrder[0].playerId;
                         gameItem.playerOrder.shift();
