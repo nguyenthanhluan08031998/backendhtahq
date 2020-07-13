@@ -1,0 +1,5 @@
+INSERT INTO `dataproject`.`funcMenu` (`Name`, `Local`, `Image`, `Link`) VALUES ('Quản lí từ điển', '1', 'http://localhost:5001/image/imgMenuFunction/quanlitudien.jpg', '/quanlitudien');
+INSERT INTO `dataproject`.`funcMenu` (`Name`, `Local`, `Image`, `Link`) VALUES ('Quản lí chủ đề', '2', 'http://localhost:5001/image/imgMenuFunction/quanlichude.jpg', '/quanlichude');
+INSERT INTO `dataproject`.`funcMenu` (`Name`, `Local`, `Image`, `Link`) VALUES ('Danh sách yêu thích', '3', 'http://localhost:5001/image/imgMenuFunction/danhsachyeuthich.png', '/yeuthich?idUser=1');
+INSERT INTO `dataproject`.`funcMenu` (`Name`, `Local`, `Image`, `Link`) VALUES ('Lịch sử tìm kiếm', '4', 'http://localhost:5001/image/imgMenuFunction/lichsutimkiem.png', '/lichsu?idUser=1');
+INSERT INTO `dataproject`.`funcMenu` (`Name`, `Local`, `Image`, `Link`) VALUES ('Cài đặt', '5', 'http://localhost:5001/image/imgMenuFunction/setting.jpg', '/setting');

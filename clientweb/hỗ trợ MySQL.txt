@@ -1,0 +1,22 @@
+*********** liên quan đến data**************************
+
+CREATE SCHEMA `tên mySQL` ;// tạo mySQL
+
+
+CREATE TABLE `tên data`.`tên bảng` // tạo bảng
+(
+  `tên biến` int PRIMARY KEY auto_increment,// khóa chính 
+  `tên biến` int
+);
+DROP TABLE `tên data`.` tên bảng`;// xóa bảng
+ALTER TABLE `tên bảng1` ADD FOREIGN KEY (`tên biến`) REFERENCES `tên bảng2` (`tên biến`);// liên kết khóa ngoại.
+ALTER TABLE `tên data`.`tên bảng` ADD COLUMN `tên thuộc tính` [kiểu dữ liệu];
+ALTER TABLE `tên data`.`tên bảng` CHANGE COLUMN `thuộc tính cần đổi kiểu dữ liệu` `thuộc tính cần đổi kiểu dữ liệu` [kiểu dữ liệu] NULL DEFAULT NULL ;
+ALTER TABLE `tên data`.`tên bảng` DROP COLUMN `tên thuộc tính cần xóa`;
+
+************liên quan đến dữ liệu trong data*************
+
+ALTER TABLE `tên bảng` AUTO_INCREMENT=1;// mặc định tự ID tự tăng với number bắt đầu từ 1
+insert into `tên MySQL`.`tên bảng` (tên biến) values("giá trị");// thêm 1 giá trị vào bảng.
+DELETE FROM `tên MySQL`.`tên bảng` WHERE (`tên biến ID` = 'giá trị');
+UPDATE `tên MySQL`.`tên bảng` SET `tên biến` = 'giá trị' WHERE (`tên biến ID` = 'giá trị');
