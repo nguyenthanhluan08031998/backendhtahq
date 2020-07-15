@@ -82,6 +82,7 @@ var Room = function (id, name, numOfPlayers, password, time, players, owner, isA
     this.players = players;
     this.owner = owner;
     this.isActive = isActive;
+    this.isStart = false;
 }
 
 io.on("connection", function (socket) {
@@ -216,7 +217,7 @@ io.on("connection", function (socket) {
 
     socket.on("joinGame", data => { // when start, all player leave room and join game
         console.log(`on join game`);
-        socket.leave(data.roomId);
+        // socket.leave(data.roomId);
         socket.join(data.gameId);
 
     })
@@ -228,7 +229,7 @@ io.on("connection", function (socket) {
         const room = roomList.find(item => item.id === roomId);
         console.log(room);
         if (room != null) {
-            let playerOrder = room.players;
+            let playerOrder = room.players.filter(x => x.isPlay);
             const ret = await wordModel.getRandomWord();
             console.log(`currentWord: ${ret.Word}`);
             const gameId = 10000 + roomId;
@@ -237,7 +238,8 @@ io.on("connection", function (socket) {
             gameList.push(game); // add to game list
             for (let item of roomList) {
                 if (item.id === roomId) {
-                    item.isActive = false;
+                    // item.isActive = false;
+                    item.isStart = true;
                     break;
                 }
             } //set room not active in room list
@@ -313,12 +315,12 @@ io.on("connection", function (socket) {
                 } else {
                     console.log('wrong word');
                     let eliminatedPlayer = gameItem.playerOrder[0].playerId;
-                    if(gameItem.playerOrder.length > 1){
+                    if (gameItem.playerOrder.length > 1) {
                         eliminatedPlayer = gameItem.playerOrder[0].playerId;
                         gameItem.playerOrder.shift();
                         gameItem.eliminatedPlayer = eliminatedPlayer;
                     }
-                
+
                     const result = {
                         eliminatedPlayerId: eliminatedPlayer,
                         nextPlayer: gameItem.playerOrder[0].playerName,
@@ -402,6 +404,30 @@ io.on("connection", function (socket) {
         const game = gameList.find(item => item.id === gameId);
         console.log(`emit history word: ${JSON.stringify(game.historyWord)}`);
         io.in(socket.id).emit('sendHistoryWord', game.historyWord);
+    })
+
+    //Xoá phòng
+    socket.on('deActiveRoom', roomId => {
+        let room = roomList.find(item => item.id === roomId);
+        socket.leave(data.roomId);
+        if (room) {
+            room.isActive = false
+            io.to(roomId).emit("sendDeleteRoom", room);
+        }
+        else {
+            console.log("not find room")
+        }
+    })
+
+    //Người join vào xem lấy thông tin game
+    socket.on('getGameInfo', roomId => {
+        let game = gameList.find(item => item.id === parseInt(roomId) + 10000);
+        if (game) {
+            io.to(socket.id).emit("sendViewGame", game);
+        }
+        else {
+            console.log("not find room")
+        }
     })
 
 });
