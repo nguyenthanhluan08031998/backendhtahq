@@ -370,7 +370,7 @@ io.on("connection", function (socket) {
             roomList.push(newRoom);
             socket.join(newRoomId);
             console.log('emit send room info: ' + JSON.stringify(newRoom));
-            io.to(socket.id).emit("sendRoomInfo", newRoom);
+            io.to(socket.id).emit("sendNewRoomInfo", newRoom);
             socket.leave(data.gameId);
             const activeRoom = roomList.filter(item => item.isActive === true);
             io.sockets.emit("roomList", { activeRoom });
@@ -385,7 +385,7 @@ io.on("connection", function (socket) {
                     socket.join(newRoomId);
                     item.players.push(player);
                     console.log('emit send room info: ' + JSON.stringify(room));
-                    io.to(socket.id).emit("sendRoomInfo", room);
+                    io.to(socket.id).emit("sendNewRoomInfo", room);
                     io.to(newRoomId).emit("sendRoomInfo", room);
                     socket.leave(data.gameId);
                     const activeRoom = roomList.filter(item => item.isActive === true);
