@@ -177,6 +177,11 @@ io.on("connection", function (socket) {
         console.log(`on leave game: ${data.gameId}, ${data.playerId}`);
         const game = gameList.find(item => item.id === data.gameId);
         if (game != null) {
+            if (game.playerOrder.length === 0 || game.playerOrder.length === 1) {
+                socket.leave(data.gameId);
+                return;
+            }
+
             let player = game.playerOrder.find(item => item.playerId == data.playerId);
             if (player != null) {
                 game.leavePlayer = player.playerName;
@@ -186,11 +191,6 @@ io.on("connection", function (socket) {
                 socket.leave(data.gameId);
                 return;
             }
-
-            if (game.playerOrder.length === 0) {
-                return;
-            }
-
 
             if (game.playerOrder.length === 1) {
                 game.stopTimer();
