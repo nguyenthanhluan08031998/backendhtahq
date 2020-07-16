@@ -385,7 +385,7 @@ io.on("connection", function (socket) {
             var newRoom = new Room(newRoomId, oldRoom.name, oldRoom.numOfPlayers, oldRoom.password, oldRoom.time, players, oldRoom.owner, true);
             roomList.push(newRoom);
             socket.join(newRoomId);
-            console.log('emit send room info: ' + JSON.stringify(newRoom));
+            console.log('emit send new room info: ' + JSON.stringify(newRoom));
             io.to(socket.id).emit("sendNewRoomInfo", newRoom);
             socket.leave(data.gameId);
             const activeRoom = roomList.filter(item => item.isActive === true);
@@ -400,7 +400,7 @@ io.on("connection", function (socket) {
                 if (item.id == newRoomId) {
                     socket.join(newRoomId);
                     item.players.push(player);
-                    console.log('emit send room info: ' + JSON.stringify(room));
+                    console.log('emit send new room info: ' + JSON.stringify(room));
                     io.to(socket.id).emit("sendNewRoomInfo", room);
                     io.to(newRoomId).emit("sendRoomInfo", room);
                     socket.leave(data.gameId);
