@@ -54,7 +54,7 @@ var Game = function (id, time, playerOrder, currentWord, date, roomName) {
                             winner: this.playerOrder[0].playerName,
                             historyWord: this.historyWord
                         }
-                        updatePoint(this.playerOrder[0].playerId, this.playerOrder[0].playerName)
+                        updatePoint(this.playerOrder[0].playerId, this.playerOrder[0].playerName, this.id)
                         io.in(this.id).emit('sendGameEnd', entity);
                     }, 2000);
                 } else {
@@ -167,7 +167,7 @@ io.on("connection", function (socket) {
         let room = roomList.find(item => item.id === data.roomId);
         if (room != null) {
             room.players = room.players.filter(item => item.playerId !== data.playerId) //remove player from room
-            if (room.players.length === 0) { //set room inactive if no player left
+            if (room.players.length === 0 && !room.isStart) { //set room inactive if no player left
                 for (const item of roomList) {
                     if (item.id === data.roomId) {
                         item.isActive = false;
@@ -209,7 +209,7 @@ io.on("connection", function (socket) {
                         winner: game.playerOrder[0].playerName,
                         historyWord: game.historyWord
                     }
-                    updatePoint(this.playerOrder[0].playerId, this.playerOrder[0].playerName)
+                    updatePoint(this.playerOrder[0].playerId, this.playerOrder[0].playerName, game.id)
                     io.in(game.id).emit('sendGameEnd', entity);
                 }, 2000);
             } else {
@@ -226,7 +226,7 @@ io.on("connection", function (socket) {
 
     socket.on("joinGame", data => { // when start, all player leave room and join game
         console.log(`on join game`);
-        // socket.leave(data.roomId);
+        socket.leave(data.roomId);
         socket.join(data.gameId);
 
     })
@@ -289,7 +289,7 @@ io.on("connection", function (socket) {
                             winner: gameItem.playerOrder[0].playerName,
                             historyWord: gameItem.historyWord
                         }
-                        updatePoint(gameItem.playerOrder[0].playerId, gameItem.playerOrder[0].playerName)
+                        updatePoint(gameItem.playerOrder[0].playerId, gameItem.playerOrder[0].playerName, gameItem.id)
                         io.in(gameId).emit('sendGameEnd', entity); //Send game result to all player in game room
                     }, 2000);
                 } else {
@@ -345,7 +345,7 @@ io.on("connection", function (socket) {
                                 winner: gameItem.playerOrder[0].playerName,
                                 historyWord: gameItem.historyWord
                             }
-                            updatePoint(gameItem.playerOrder[0].playerId, gameItem.playerOrder[0].playerName)
+                            updatePoint(gameItem.playerOrder[0].playerId, gameItem.playerOrder[0].playerName, gameItem.id)
                             io.in(gameId).emit('sendGameEnd', entity); //Send game result to all player in game room
                         }, 2000);
                     } else {
@@ -370,6 +370,11 @@ io.on("connection", function (socket) {
             console.log(`room not exitst`);
             console.log(`room List: ${JSON.stringify(roomList)}`);
             const oldRoom = roomList.find(item => item.id === id);
+            let index = roomList.findIndex(x => x.id == id)
+            if (index > -1) {
+                roomList[index].isActive = false
+            }
+
             console.log(`old room: ${JSON.stringify(oldRoom)}`);
             const player = {
                 playerId: data.playerId,
@@ -448,8 +453,18 @@ io.on("connection", function (socket) {
     })
 
 });
-function updatePoint(id, name) {
+function updatePoint(id, name, gameId) {
     let index = pointList.findIndex(x => x.id == id)
+    let roomId = gameId - 10000
+    if (roomId > 0) {
+        let romIndex = roomList.findIndex(x => x.id = roomId)
+        if (romIndex > -1) {
+            roomList[romIndex].isStart = false
+            roomList[romIndex].isActive = false
+            const activeRoom = roomList.filter(item => item.isActive === true);
+            io.sockets.emit("roomList", { activeRoom })
+        }
+    }
     if (index > -1) {
         pointList[index].point = pointList[index].point + 100
     }
@@ -457,7 +472,9 @@ function updatePoint(id, name) {
         let point = new Point(id, name, 100)
         pointList.push(point)
     }
-    io.sockets.emit("pointList", pointList);
+    io.sockets.emit("pointList", pointList.sort(function (a, b) {
+        return a.point - b.point;
+    }));
 }
 
 app.get("/", (req, res) => {
