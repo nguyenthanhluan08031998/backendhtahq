@@ -11,6 +11,7 @@ let data = [];
 var roomId = 0;
 var roomList = [];
 var gameList = [];
+var pointList = [];
 
 var Game = function (id, time, playerOrder, currentWord, date, roomName) {
     this.id = id;
@@ -53,6 +54,7 @@ var Game = function (id, time, playerOrder, currentWord, date, roomName) {
                             winner: this.playerOrder[0].playerName,
                             historyWord: this.historyWord
                         }
+                        updatePoint(this.playerOrder[0].playerId, this.playerOrder[0].playerName)
                         io.in(this.id).emit('sendGameEnd', entity);
                     }, 2000);
                 } else {
@@ -83,6 +85,12 @@ var Room = function (id, name, numOfPlayers, password, time, players, owner, isA
     this.owner = owner;
     this.isActive = isActive;
     this.isStart = false;
+}
+
+var Point = function (id, name, point) {
+    this.id = id;
+    this.name = name;
+    this.point = point;
 }
 
 io.on("connection", function (socket) {
@@ -201,6 +209,7 @@ io.on("connection", function (socket) {
                         winner: game.playerOrder[0].playerName,
                         historyWord: game.historyWord
                     }
+                    updatePoint(this.playerOrder[0].playerId, this.playerOrder[0].playerName)
                     io.in(game.id).emit('sendGameEnd', entity);
                 }, 2000);
             } else {
@@ -280,6 +289,7 @@ io.on("connection", function (socket) {
                             winner: gameItem.playerOrder[0].playerName,
                             historyWord: gameItem.historyWord
                         }
+                        updatePoint(gameItem.playerOrder[0].playerId, gameItem.playerOrder[0].playerName)
                         io.in(gameId).emit('sendGameEnd', entity); //Send game result to all player in game room
                     }, 2000);
                 } else {
@@ -335,6 +345,7 @@ io.on("connection", function (socket) {
                                 winner: gameItem.playerOrder[0].playerName,
                                 historyWord: gameItem.historyWord
                             }
+                            updatePoint(gameItem.playerOrder[0].playerId, gameItem.playerOrder[0].playerName)
                             io.in(gameId).emit('sendGameEnd', entity); //Send game result to all player in game room
                         }, 2000);
                     } else {
@@ -412,7 +423,8 @@ io.on("connection", function (socket) {
         socket.leave(data.roomId);
         if (room) {
             room.isActive = false
-            io.to(roomId).emit("sendDeleteRoom", room);
+            console.log("sendDelete", socket.id)
+            io.in(roomId).emit("sendDeleteRoom", room);
         }
         else {
             console.log("not find room")
@@ -430,7 +442,23 @@ io.on("connection", function (socket) {
         }
     })
 
+    //Lấy bảng xếp hạng
+    socket.on('getPointList', () => {
+        io.sockets.emit("pointList", pointList);
+    })
+
 });
+function updatePoint(id, name) {
+    let index = pointList.findIndex(x => x.id == id)
+    if (index > -1) {
+        pointList[index].point = pointList[index].point + 100
+    }
+    else {
+        let point = new Point(id, name, 100)
+        pointList.push(point)
+    }
+    io.sockets.emit("pointList", pointList);
+}
 
 app.get("/", (req, res) => {
     res.send("Game on!!!");
