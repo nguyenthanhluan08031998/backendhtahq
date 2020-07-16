@@ -5,6 +5,6 @@ module.exports = mysql.createPool({
     host: 'localhost',
     port: 3306,
     user: 'root',
-    password: 'songhuy771998',
+    password: '',
     database: 'DataProject'
 })
