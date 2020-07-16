@@ -444,7 +444,7 @@ io.on("connection", function (socket) {
 
     //Lấy bảng xếp hạng
     socket.on('getPointList', () => {
-        io.sockets.emit("pointList", pointList);
+        io.sockets.emit("pointList", pointList.slice(0, 10));
     })
 
 });
