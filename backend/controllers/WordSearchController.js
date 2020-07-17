@@ -4,18 +4,18 @@ const wordSearchModel = require('../models/WordSearch.model');
 
 router.get('/searchword', async (req, res) => {
     var table = req.query.table
-    const list = await wordSearchModel.getWord(table,req.query.word)
+    const list = await wordSearchModel.getWord(table, req.query.word)
     res.json(list.ListGrid[0].Id)
 })
 router.get('/getWordById', async (req, res) => {
     var table = req.query.table
     var id = req.query.id
-    const word = await wordSearchModel.getWordById(table,id)
+    const word = await wordSearchModel.getWordById(table, id)
     res.json(word.Word[0])
 })
-router.get('/getWordByWord', async(req, res) => {
+router.get('/getWordByWord', async (req, res) => {
     let table = req.query.table
-    let word = req. query.word
+    let word = req.query.word
     let result = await wordSearchModel.getWordByWord(table, word)
     res.json(result.Word[0])
 })
@@ -47,14 +47,24 @@ router.post('/addOrUpdate', async (req, res) => {
     res.json(id)
 })
 
+function promiseToJson(promise) {
+    return JSON.parse(JSON.stringify(promise));
+}
 router.get('/checkExistWordLike', async (req, res) => {
-    const result = await wordSearchModel.checkExist(req.query.IdWord)
-    res.json(result.ListGrid[0])
+    const promise = await wordSearchModel.checkExist(req.query.IdWord, req.query.IdUser)
+    var result = promiseToJson(promise)
+    if (result && result.length > 0) {
+        res.json(result[0].Id)
+    }
+    else {
+        res.json(false)
+    }
 })
 
 router.post('/deleteWordLike', async (req, res) => {
     const word = req.body
     await wordSearchModel.deleteWordLike('WordLike', word.Id)
+    res.json(1)
 })
 
 router.get('/getOption', async (req, res) => {

@@ -78,6 +78,7 @@ module.exports = {
     },
     getNumberOfRows: (table, condition) => pool_query(`select count(*) as Sum from ${table} ${condition ? `WHERE ${condition}` : ""} `),
     delete: (table, id) => {
+        console.log(table, id)
         return pool_query(`delete from ${table} where Id=${id}`)
     },
 }

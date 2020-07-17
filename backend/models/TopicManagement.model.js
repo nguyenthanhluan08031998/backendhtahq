@@ -20,5 +20,5 @@ module.exports = {
             TotalCount: parseInt(sum)
         }
     },
-    getAllTopicWithNumberWord: () => db.load(`select Topic.Id, Topic.NameTopic, Topic.Translate, count(*) as NumberWord from Topic, av where IdTopic like concat('%,',Topic.Id,'%') group by Topic.Id`)
+    getAllTopicWithNumberWord: () => db.load(`select Topic.Id, Topic.NameTopic, Topic.Translate, count(*) as NumberWord from Topic, av where IdTopic like concat('%,',Topic.Id,',%') group by Topic.Id`)
 }

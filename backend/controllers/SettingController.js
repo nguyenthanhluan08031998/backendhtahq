@@ -83,7 +83,7 @@ router.get('/getById', async (req, res) => {
         res.json(item)
         return
     }
-    res.json({ error: "not found" })
+    res.json(null)
 })
 
 

@@ -31,6 +31,7 @@ router.get('/checkUser', async (req, res) => {
     else res.json({ "exist": true })
 })
 
+
 router.post('/addOrUpdate', async (req, res) => {
     var id = -1
     let user = req.body
@@ -52,5 +53,53 @@ router.post('/addOrUpdate', async (req, res) => {
         if (result.affectedRows > 0) id = user.Id
     }
     res.json({ IdUser: id })
+})
+
+
+router.post('/changepassword', async (req, res) => {
+    let user = req.body
+
+    const email = user.Email
+    const users = await model.checkExistAccount(email);
+    const user1 = users[0]
+    if (user && bcrypt.compareSync(user.OldPassword, user1.Password)) {
+        if (user.Password == user.PasswordConfirm) {
+            let hash = bcrypt.hashSync(user.Password);
+            user.Password = hash
+            // console.log(user.Password)
+            var item = users[0];
+            item.Password = user.Password
+            item.IdRole = 2
+            model.update("user", item, item.Id)
+            res.json(1)
+            return
+        }
+        else {
+            res.json(-1)
+            return
+        }
+    }
+    else {
+        res.json(-2)
+        return
+    }
+
+})
+router.post('/forgotpassword', async (req, res) => {
+    let user = req.body
+    const email = user.Email
+    const users = await model.checkExist(email);
+
+    if (user.Password == user.PasswordConfirm) {
+        let hash = bcrypt.hashSync(user.Password);
+        user.Password = hash
+        var item = users[0];
+        item.Password = user.Password
+        model.update("user", item, item.Id)
+        res.json(1)
+    }
+    else {
+        res.json(-1)
+    }
 })
 module.exports = router;

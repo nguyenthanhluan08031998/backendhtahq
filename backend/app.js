@@ -24,6 +24,7 @@ app.use('/api/timkiem', require('./controllers/WordSearchController'))
 app.use('/api/setting', require('./controllers/SettingController'))
 app.use('/api/appbar', require('./controllers/AppBarController'))
 app.use('/api/sync', require('./controllers/SyncController'))
+app.use('/api/hoctienganhtheochude', require('./controllers/LearnEnglishByTopicController'))
 app.listen(PORT, () => {
     console.log(`API is running in Port ${PORT}`)
 })

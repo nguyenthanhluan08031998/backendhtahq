@@ -37,6 +37,7 @@ router.get('/get', async (req, res) => {
 
 router.get('/getOption', async (req, res) => {
     result = await avModel.get("Id, NameTopic")
+    console.log(result)
     res.json(result)
 })
 

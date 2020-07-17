@@ -4,4 +4,5 @@ module.exports = {
     add: (table, item) => db.add(table, item),
     update: (table, item, id) => db.update(table, item, id),
     checkExist: (value, Id) => db.load(`select Id from User where Email=N'${value}'`),
+    checkExistAccount: (value, Id) => db.load(`select * from User where Email=N'${value}'`),
 }
