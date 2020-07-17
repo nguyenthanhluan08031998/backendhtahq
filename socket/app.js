@@ -209,7 +209,7 @@ io.on("connection", function (socket) {
                         winner: game.playerOrder[0].playerName,
                         historyWord: game.historyWord
                     }
-                    updatePoint(this.playerOrder[0].playerId, this.playerOrder[0].playerName, game.id)
+                    updatePoint(game.playerOrder[0].playerId, game.playerOrder[0].playerName, game.id)
                     io.in(game.id).emit('sendGameEnd', entity);
                 }, 2000);
             } else {
@@ -378,14 +378,15 @@ io.on("connection", function (socket) {
             console.log(`old room: ${JSON.stringify(oldRoom)}`);
             const player = {
                 playerId: data.playerId,
-                playerName: data.playerName
+                playerName: data.playerName,
+                isPlay: data.isPlay
             };
             let players = [];
             players.push(player);
             var newRoom = new Room(newRoomId, oldRoom.name, oldRoom.numOfPlayers, oldRoom.password, oldRoom.time, players, oldRoom.owner, true);
             roomList.push(newRoom);
             socket.join(newRoomId);
-            console.log('emit send room info: ' + JSON.stringify(newRoom));
+            console.log('emit send new room info: ' + JSON.stringify(newRoom));
             io.to(socket.id).emit("sendNewRoomInfo", newRoom);
             socket.leave(data.gameId);
             const activeRoom = roomList.filter(item => item.isActive === true);
@@ -395,12 +396,13 @@ io.on("connection", function (socket) {
             roomList.forEach(item => {
                 const player = {
                     playerId: data.playerId,
-                    playerName: data.playerName
+                    playerName: data.playerName,
+                    isPlay: data.isPlay
                 };
                 if (item.id == newRoomId) {
                     socket.join(newRoomId);
                     item.players.push(player);
-                    console.log('emit send room info: ' + JSON.stringify(room));
+                    console.log('emit send new room info: ' + JSON.stringify(room));
                     io.to(socket.id).emit("sendNewRoomInfo", room);
                     io.to(newRoomId).emit("sendRoomInfo", room);
                     socket.leave(data.gameId);
@@ -440,6 +442,7 @@ io.on("connection", function (socket) {
     socket.on('getGameInfo', roomId => {
         let game = gameList.find(item => item.id === parseInt(roomId) + 10000);
         if (game) {
+            console.log(`emit send view game: ${JSON.stringify(game)}`);
             io.to(socket.id).emit("sendViewGame", game);
         }
         else {
@@ -457,11 +460,12 @@ function updatePoint(id, name, gameId) {
     let index = pointList.findIndex(x => x.id == id)
     let roomId = gameId - 10000
     if (roomId > 0) {
-        let romIndex = roomList.findIndex(x => x.id = roomId)
+        let romIndex = roomList.findIndex(x => x.id == roomId)
         if (romIndex > -1) {
-            roomList[romIndex].isStart = false
-            roomList[romIndex].isActive = false
+            roomList[romIndex].isStart = false;
+            roomList[romIndex].isActive = false;
             const activeRoom = roomList.filter(item => item.isActive === true);
+            console.log(`emit room list: ${JSON.stringify(activeRoom)}`);
             io.sockets.emit("roomList", { activeRoom })
         }
     }
