@@ -1,10 +1,10 @@
-const mysql = require('mysql');
+const mysql = require('mysql')
 
 module.exports = mysql.createPool({
     connectionLimit: 100,
-    host: 'localhost',
+    host: 'remotemysql.com',
     port: 3306,
-    user: 'root',
-    password: '',
-    database: 'DataProject'
+    user: 'lHgt1Ac0iy',
+    password: 'lEkkwhy0Dd',
+    database: 'lHgt1Ac0iy'
 })
