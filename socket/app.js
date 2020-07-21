@@ -477,7 +477,7 @@ function updatePoint(id, name, gameId) {
         pointList.push(point)
     }
     io.sockets.emit("pointList", pointList.sort(function (a, b) {
-        return a.point - b.point;
+        return b.point - a.point;
     }));
 }
 
