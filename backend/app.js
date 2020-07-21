@@ -10,7 +10,7 @@ app.use('/image', express.static('image'));
 const PORT = 5001
 
 app.get('/', (req, res) => {
-
+	res.send(`Backend Effective english`);
 })
 
 //Đường dẫn API
@@ -26,6 +26,11 @@ app.use('/api/appbar', require('./controllers/AppBarController'))
 app.use('/api/sync', require('./controllers/SyncController'))
 app.use('/api/hoctienganhtheochude', require('./controllers/LearnEnglishByTopicController'))
 app.use('/api/quanlinguoidung', require('./controllers/UserListController'))
-app.listen(PORT, () => {
-    console.log(`API is running in Port ${PORT}`)
+
+
+app.use((req, res, next) => {
+    res.status(404).send('RESOURCE NOT FOUND!');
+});
+app.listen(process.env.PORT || PORT, () => {
+    console.log(`API is running`)
 })
