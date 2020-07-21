@@ -25,6 +25,7 @@ app.use('/api/setting', require('./controllers/SettingController'))
 app.use('/api/appbar', require('./controllers/AppBarController'))
 app.use('/api/sync', require('./controllers/SyncController'))
 app.use('/api/hoctienganhtheochude', require('./controllers/LearnEnglishByTopicController'))
+app.use('/api/quanlinguoidung', require('./controllers/UserListController'))
 app.listen(PORT, () => {
     console.log(`API is running in Port ${PORT}`)
 })

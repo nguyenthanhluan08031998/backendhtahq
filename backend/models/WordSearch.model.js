@@ -23,6 +23,7 @@ module.exports = {
 
     checkExist: (value, IdUser) => db.load(`select * from WordLike where IdWord=${value} and IdUser = ${IdUser}`),
     deleteWordLike: (table, id) => db.delete(table, id),
-    get: (rows, languageTable, e) => db.load(`select ${rows} from ${languageTable} where Word like '${e}%' limit 10`)
+    get: (rows, languageTable, e) => db.load(`select ${rows} from ${languageTable} where Word like '${e}%' limit 10`),
+    getIdTopicRemember: (item) => db.load(`select * from TopicRemember where IdUser = ${item.IdUser} and IdWord = ${item.IdWord}`)
     // get: (rows) => db.load(`select ${rows} from AV`)
 }

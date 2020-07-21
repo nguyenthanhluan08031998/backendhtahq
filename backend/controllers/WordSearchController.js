@@ -73,5 +73,12 @@ router.get('/getOption', async (req, res) => {
     result = await wordSearchModel.get("Id, Word", languageTable, e)
     res.json(result)
 })
-
+router.post('/updateTopicRemember', async (req, res) => {
+    var item = req.body;
+    // let data = await wordSearchModel.getIdTopicRemember(item);
+    // console.log(data)
+    result = await wordSearchModel.add('TopicRemember', item)
+    if (result.affectedRows > 0) res.json(true)
+    else res.json(false)
+})
 module.exports = router;
