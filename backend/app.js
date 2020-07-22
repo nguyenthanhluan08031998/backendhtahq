@@ -1,6 +1,7 @@
-const express = require('express');
+﻿const express = require('express');
 const morgan = require('morgan');
 var cors = require('cors');
+const functions = require('firebase-functions');
 
 const app = express();
 app.use(morgan('dev'));

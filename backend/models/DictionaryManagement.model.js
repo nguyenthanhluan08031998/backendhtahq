@@ -1,6 +1,6 @@
 const db = require('../utils/db');
 module.exports = {
-    checkExist: (value, Id) => db.load(`select Id from av where Word=N'${value}' and Id!=${Id}`),
+    checkExist: (value, Id) => db.load(`select Id from AV where Word=N'${value}' and Id!=${Id}`),
     add: (table, item) => db.add(table, item),
     update: (table, item, id) => db.update(table, item, id),
     getAllPaging: async (table, condition, orderBy, page, rowPerPage) => {
@@ -12,5 +12,5 @@ module.exports = {
         }
     },
     get: (rows) => db.load(`select ${rows} from Topic`),
-    getWordByTopic: (Id) => db.load(`select * from av where IdTopic like'%,${Id},%'`)
+    getWordByTopic: (Id) => db.load(`select * from AV where IdTopic like'%,${Id},%'`)
 }

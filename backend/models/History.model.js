@@ -12,8 +12,8 @@ module.exports = {
     getAllHistoryAngPaging: (IdUser) => db.load(`
     select A.newId as Id, A.IdWord, A.Word from
         (
-            select max(TimeSearch), searchhistory.Id as newId, IdWord, Word 
-            from SearchHistory, av 
+            select max(TimeSearch), SearchHistory.Id as newId, IdWord, Word 
+            from SearchHistory, AV 
             where IdUser = ${IdUser} and av.Id = SearchHistory.IdWord 
             Group By IdWord
         ) as A    

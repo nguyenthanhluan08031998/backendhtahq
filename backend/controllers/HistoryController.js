@@ -8,12 +8,12 @@ router.get('/getPage', async (req, res) => {
     const IdUser = req.query.IdUser
     const list = await avModel.getAllPaging(
         'SearchHistory',
-        `SearchHistory.IdUser = ${IdUser} and Av.Id = SearchHistory.IdWord`,
+        `SearchHistory.IdUser = ${IdUser} and AV.Id = SearchHistory.IdWord`,
         null,
         page,
         rowsPerPage,
-        "Av",  // Các bảng phụ cần lấy,
-        "SearchHistory.Id as Id, SearchHistory.IdWord as IdWord, Av.Word as Word, SearchHistory.TimeSearch" // Chọn các cột cần lấy
+        "AV",  // Các bảng phụ cần lấy,
+        "SearchHistory.Id as Id, SearchHistory.IdWord as IdWord, AV.Word as Word, SearchHistory.TimeSearch" // Chọn các cột cần lấy
     )
     res.json(list)
 })

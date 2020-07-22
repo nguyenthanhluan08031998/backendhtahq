@@ -39,7 +39,7 @@ router.post('/addOrUpdate', async (req, res) => {
                 Remembered: 0
             }))
             newWordByTopicUserRemindDetail.forEach(async (x) => {
-                await model.add('topicUserRemindDetail', x)
+                await model.add('TopicUserRemindDetail', x)
             })
 
         }
@@ -48,7 +48,7 @@ router.post('/addOrUpdate', async (req, res) => {
             topicUserRemindItem = { Id: 0, IdUser: item.IdUser, IdTopic: item.IdTopic }
 
             //Lưu chủ đề nhắc nhở mới
-            result = await model.add('topicUserRemind', topicUserRemindItem)
+            result = await model.add('TopicUserRemind', topicUserRemindItem)
             if (result.affectedRows > 0 && result.insertId) topicUserRemindItem.Id = result.insertId
 
             WordByTopicUserRemindDetail = promiseToString(WordByTopicList).map(x => ({
@@ -58,17 +58,17 @@ router.post('/addOrUpdate', async (req, res) => {
                 Remembered: 0
             }))
             WordByTopicUserRemindDetail.forEach(async (x) => {
-                await model.add('topicUserRemindDetail', x)
+                await model.add('TopicUserRemindDetail', x)
             });
         }
 
     }
     if (item.Id == 0) {
-        result = await model.add('remind', item)
+        result = await model.add('Remind', item)
         if (result.affectedRows > 0 && result.insertId) id = result.insertId
     }
     else if (item.Id > 0) {
-        result = await model.update('remind', item, item.Id)
+        result = await model.update('Remind', item, item.Id)
         if (result.affectedRows > 0) id = item.Id
     }
     res.json(id)

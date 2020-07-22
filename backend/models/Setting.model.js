@@ -5,25 +5,25 @@ module.exports = {
     getAllRemindWord: (Id) => db.load(`select * from RemindSupport, Av where IdRemind = ${Id} and `),
     getById: (IdUser) => db.load(`select * from Remind where IdUser = ${IdUser}`),
     getTopicUserRemind: (IdUser, IdTopic) => db.load(`select * from TopicUserRemind where IdUser = ${IdUser} and IdTopic = ${IdTopic}`),
-    getPresentRemindWord: (id) => db.load(`select * from topicuserreminddetail where IdTopicUserRemind = ${id}`),
+    getPresentRemindWord: (id) => db.load(`select * from TopicUserRemindDetail where IdTopicUserRemind = ${id}`),
     getRandomHistory: (id) => db.load(`
-        SELECT av.Id, av.Word , av.Description, av.Pronounce
-        FROM SearchHistory, av 
+        SELECT AV.Id, AV.Word , AV.Description, AV.Pronounce
+        FROM SearchHistory, AV 
         where IdUser = ${id} and av.Id = SearchHistory.IdWord
         ORDER BY RAND()
         LIMIT 1`),
     getRandomFavorite: (id) => db.load(
-        `SELECT av.Id, av.Word , av.Description, av.Pronounce
-        FROM WordLike, av 
-        where IdUser = ${id} and av.Id = WordLike.IdWord
+        `SELECT AV.Id, AV.Word , AV.Description, AV.Pronounce
+        FROM WordLike, AV
+        where IdUser = ${id} and AV.Id = WordLike.IdWord
         ORDER BY RAND()
         LIMIT 1`
     ),
     getRandomTopic: (IdUser, IdTopic) => db.load(
-        `SELECT av.Id, av.Word , av.Description, av.Pronounce
+        `SELECT AV.Id, AV.Word , AV.Description, AV.Pronounce
         FROM TopicUserRemind, av, TopicUserRemindDetail 
         where TopicUserRemind.IdUser = ${IdUser} and TopicUserRemind.IdTopic = ${IdTopic} 
-        and TopicUserRemindDetail.IdTopicUserRemind = TopicUserRemind.Id and av.Id = TopicUserRemindDetail.IdWord
+        and TopicUserRemindDetail.IdTopicUserRemind = TopicUserRemind.Id and AV.Id = TopicUserRemindDetail.IdWord
         ORDER BY RAND()
         LIMIT 1`
     )

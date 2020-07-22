@@ -27,7 +27,7 @@ var Game = function (id, time, playerOrder, currentWord, date, roomName) {
         var tempTime = this.time;
         interval = setInterval(() => {
             console.log(tempTime);
-            if (tempTime === 0) {
+            if (tempTime == 0) {
                 console.log(`time out`);
                 clearInterval(interval);
                 delete this.leavePlayer;
@@ -64,8 +64,10 @@ var Game = function (id, time, playerOrder, currentWord, date, roomName) {
                     this.startTimer();
                 }
             }
-            io.in(this.id).emit("sendTimer", tempTime);
-            tempTime = tempTime - 1;
+            if (tempTime >= 0) {
+                io.in(this.id).emit("sendTimer", tempTime);
+                tempTime = tempTime - 1;
+            }
         }, 1000);
     }
 
@@ -176,7 +178,7 @@ io.on("connection", function (socket) {
                 }
             }
         }
-        socket.leave(roomId);
+        // socket.leave(roomId);
         const activeRoom = roomList.filter(item => item.isActive === true);
         io.sockets.emit("roomList", { activeRoom });
         io.in(data.roomId).emit("sendRoomInfo", room);
@@ -452,7 +454,25 @@ io.on("connection", function (socket) {
 
     //Lấy bảng xếp hạng
     socket.on('getPointList', () => {
-        io.to(socket.id).emit("pointList", pointList.slice(0, 10));
+        io.to(socket.id).emit("pointList", pointList.slice(0, 100));
+    })
+
+    //Remove member
+    socket.on('removeMember', data => {
+        console.log(`on remove member: room ${data.roomId}, player ${data.playerId}`);
+        let index = roomList.findIndex(item => item.id === data.roomId);
+        if (index > -1) {
+            const newRoomList = roomList.map((row, i) => {
+                if (i == index) {
+                    row.players = row.players.filter(item => item.playerId !== data.playerId)
+                }
+                return row
+            })
+            roomList = newRoomList
+            io.in(data.roomId).emit("sendRoomRemove", { newRoom: newRoomList[index], removedPlayer: data.playerId });
+        }
+        const activeRoom = roomList.filter(item => item.isActive === true);
+        io.sockets.emit("roomList", { activeRoom });
     })
 
 });
@@ -477,8 +497,8 @@ function updatePoint(id, name, gameId) {
         pointList.push(point)
     }
     io.sockets.emit("pointList", pointList.sort(function (a, b) {
-        return a.point - b.point;
-    }));
+        return b.point - a.point;
+    }).slice(0, 100));
 }
 
 app.get("/", (req, res) => {

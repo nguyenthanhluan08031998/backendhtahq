@@ -8,5 +8,5 @@ module.exports = {
             TotalCount: parseInt(sum)
         }
     },
-    getVocabularyByTopic: async (idTopic) => db.load(`select * from Av where IdTopic like '%,${idTopic},%'`)
+    getVocabularyByTopic: async (idTopic) => db.load(`select * from AV where IdTopic like '%,${idTopic},%'`)
 }

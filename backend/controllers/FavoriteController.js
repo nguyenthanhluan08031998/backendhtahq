@@ -8,12 +8,12 @@ router.get('/getPage', async (req, res) => {
     const IdUser = req.query.IdUser
     const list = await avModel.getAllPaging(
         'WordLike',
-        `WordLike.IdUser = ${IdUser} and Av.Id = WordLike.IdWord`,
+        `WordLike.IdUser = ${IdUser} and AV.Id = WordLike.IdWord`,
         null,
         page,
         rowsPerPage,
-        "Av",  // Các bảng phụ cần lấy,
-        "WordLike.Id as Id, WordLike.IdWord as IdWord, Av.Word as Word" // Chọn các cột cần lấy
+        "AV",  // Các bảng phụ cần lấy,
+        "WordLike.Id as Id, WordLike.IdWord as IdWord, AV.Word as Word" // Chọn các cột cần lấy
     )
     res.json(list)
 })

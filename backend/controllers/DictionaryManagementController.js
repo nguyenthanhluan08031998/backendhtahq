@@ -9,18 +9,18 @@ router.get('/getPage', async (req, res) => {
     const page = req.query.page
     const rowsPerPage = req.query.rowsPerPage
     const textSearch = req.query.textSearch
-    const list = await avModel.getAllPaging('av', `word like N'%${textSearch}%' or Description like N'%${textSearch}%'`, null, page, rowsPerPage)
+    const list = await avModel.getAllPaging('AV', `word like N'%${textSearch}%' or Description like N'%${textSearch}%'`, null, page, rowsPerPage)
     res.json(list)
 })
 router.post('/addOrUpdate', async (req, res) => {
     var id = -1
     var item = req.body
     if (item.Id == 0) {
-        result = await avModel.add('av', item)
+        result = await avModel.add('AV', item)
         if (result.affectedRows > 0 && result.insertId) id = result.insertId
     }
     else if (item.Id > 0) {
-        result = await avModel.update('av', item, item.Id)
+        result = await avModel.update('AV', item, item.Id)
         if (result.affectedRows > 0) id = item.Id
     }
     res.json(id)
