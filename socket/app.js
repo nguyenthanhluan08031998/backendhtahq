@@ -27,7 +27,7 @@ var Game = function (id, time, playerOrder, currentWord, date, roomName) {
         var tempTime = this.time;
         interval = setInterval(() => {
             console.log(tempTime);
-            if (tempTime == 0) {
+            if (tempTime <= 0) {
                 console.log(`time out`);
                 clearInterval(interval);
                 delete this.leavePlayer;
