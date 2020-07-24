@@ -14,7 +14,7 @@ module.exports = {
         (
             select max(TimeSearch), SearchHistory.Id as newId, IdWord, Word 
             from SearchHistory, AV 
-            where IdUser = ${IdUser} and av.Id = SearchHistory.IdWord 
+            where IdUser = ${IdUser} and AV.Id = SearchHistory.IdWord 
             Group By IdWord
         ) as A    
     `)
