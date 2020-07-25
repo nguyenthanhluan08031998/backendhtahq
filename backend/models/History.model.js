@@ -9,13 +9,21 @@ module.exports = {
         }
     },
     getAllHistory: (IdUser) => db.load(`select * from SearchHistory where IdUser = ${IdUser}`),
+    // getAllHistoryAngPaging: (IdUser) => db.load(`
+    // select A.newId as Id, A.IdWord, A.Word from
+    //     (
+    //         select max(TimeSearch), SearchHistory.Id as newId, IdWord, Word 
+    //         from SearchHistory, AV 
+    //         where IdUser = ${IdUser} and AV.Id = SearchHistory.IdWord 
+    //         Group By IdWord
+    //     ) as A    
+    // `),
     getAllHistoryAngPaging: (IdUser) => db.load(`
     select A.newId as Id, A.IdWord, A.Word from
         (
-            select max(TimeSearch), SearchHistory.Id as newId, IdWord, Word 
+            select TimeSearch, SearchHistory.Id as newId, IdWord, Word 
             from SearchHistory, AV 
             where IdUser = ${IdUser} and AV.Id = SearchHistory.IdWord 
-            Group By IdWord
-        ) as A    
+            ) as A 
     `)
 }

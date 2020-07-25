@@ -1,6 +1,8 @@
 ﻿const express = require('express');
 const morgan = require('morgan');
 var cors = require('cors');
+const functions = require('firebase-functions');
+
 const app = express();
 app.use(morgan('dev'));
 app.use(express.json());
@@ -9,7 +11,7 @@ app.use('/image', express.static('image'));
 const PORT = 5001
 
 app.get('/', (req, res) => {
-	res.send(`Backend Effective english`);
+
 })
 
 //Đường dẫn API
@@ -25,11 +27,7 @@ app.use('/api/appbar', require('./controllers/AppBarController'))
 app.use('/api/sync', require('./controllers/SyncController'))
 app.use('/api/hoctienganhtheochude', require('./controllers/LearnEnglishByTopicController'))
 app.use('/api/quanlinguoidung', require('./controllers/UserListController'))
-
-
-app.use((req, res, next) => {
-    res.status(404).send('RESOURCE NOT FOUND!');
-});
-app.listen(process.env.PORT || PORT, () => {
-    console.log(`API is running`)
+app.use('/api/remember', require('./controllers/RememberController'))
+app.listen(PORT, () => {
+    console.log(`API is running in Port ${PORT}`)
 })
