@@ -21,7 +21,7 @@ module.exports = {
     ),
     getRandomTopic: (IdUser, IdTopic) => db.load(
         `SELECT AV.Id, AV.Word , AV.Description, AV.Pronounce
-        FROM TopicUserRemind, av, TopicUserRemindDetail 
+        FROM TopicUserRemind, AV, TopicUserRemindDetail 
         where TopicUserRemind.IdUser = ${IdUser} and TopicUserRemind.IdTopic = ${IdTopic} 
         and TopicUserRemindDetail.IdTopicUserRemind = TopicUserRemind.Id and AV.Id = TopicUserRemindDetail.IdWord
         ORDER BY RAND()
