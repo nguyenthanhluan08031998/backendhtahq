@@ -13,7 +13,7 @@ router.get('/getPage', async (req, res) => {
         page,
         rowsPerPage,
         "AV",  // Các bảng phụ cần lấy,
-        "SearchHistory.Id as Id, SearchHistory.IdWord as IdWord, AV.Word as Word, SearchHistory.TimeSearch" // Chọn các cột cần lấy
+        "SearchHistory.Id as Id, SearchHistory.IdWord as IdWord, AV.Word as Word, SearchHistory.TimeSearch, SearchHistory.location" // Chọn các cột cần lấy
     )
     res.json(list)
 })
